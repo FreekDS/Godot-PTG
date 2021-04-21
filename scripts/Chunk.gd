@@ -92,25 +92,6 @@ func _initialize():
 	pass
 
 
-var rotation_haha = 0.2
-var timing = 0
-
-func _process(delta):
-	
-	
-	
-	if timing > 10:
-		var chance = rand_range(0, 100)
-		if chance <0:
-			rotation_haha = -rotation_haha
-		timing = 0
-	
-	if not Engine.editor_hint:
-		$TerrainMesh.rotate_y(rotation_haha * delta)
-	
-	timing += delta	
-
-
 #func _ready():
 #	_trigger_update()
 #	noise = OpenSimplexNoise.new()

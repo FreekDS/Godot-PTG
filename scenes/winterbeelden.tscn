@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://scenes/Chunk.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scripts/Rotate.gd" type="Script" id=2]
+[ext_resource path="res://cutom-env.tres" type="Environment" id=3]
+
+[node name="Spatial" type="Spatial"]
+
+[node name="Chunks" type="Spatial" parent="."]
+script = ExtResource( 2 )
+
+[node name="Chunk" parent="Chunks" instance=ExtResource( 1 )]
+chunk_seed = 123456792
+chunk_x = 10.0
+
+[node name="Camera" type="Camera" parent="."]
+transform = Transform( 1, 0, 0, 0, 0.927901, 0.372826, 0, -0.372826, 0.927901, 13.9545, 114.747, 182.686 )
+environment = ExtResource( 3 )
+current = true
+far = 8192.0
+
+[node name="DirectionalLight" type="DirectionalLight" parent="."]
+transform = Transform( 1, 0, 0, 0, 0.289266, 0.957249, 0, -0.957249, 0.289266, 0, 190.474, 190.658 )
+light_energy = 0.86
+light_indirect_energy = 0.0
+light_specular = 0.84
+light_bake_mode = 2
