@@ -1,106 +1,83 @@
-tool
 extends Spatial
 
-var mesh_instance : MeshInstance
-var noise : OpenSimplexNoise = OpenSimplexNoise.new()
+class_name Chunk
 
-# Visible in editor
-export(int) var chunk_seed = randi() setget set_chunk_seed
-export var chunk_x : float = 1 setget set_chunk_x
-export var chunk_z : float = 1 setget set_chunk_z
-export(bool) var chunk_generate_water = false setget set_generate_water
-export(int, 1, 500) var chunk_size = 16 setget set_chunk_size
+onready var mesh_instance : MeshInstance = $TerrainMesh
+onready var water_mesh : MeshInstance = $WaterMesh
+var noise : Noise.NoiseGenerator
 
-export(float) var chunk_water_offset = 0 setget set_water_offset
+var chunk_x : float
+var chunk_z : float
 
-export var material_terrain : Material setget set_material
-export var material_water : Material
+var chunk_generate_water = false setget set_generate_water
+var chunk_size = 16 setget set_chunk_size
 
+var chunk_water_offset = 0 setget set_water_offset
 
-export(int,100) var noise_frequency = 100 setget set_frequency
-export(float) var noise_lacunarity = 1 setget set_lacunarity
-export(int, 1, 9) var noise_octaves = 1 setget set_octaves
-export(float) var noise_persistence = 1 setget set_persistence
+export var material_terrain : Material setget set_terrain_material
+var material_water : Material
 
 
-func set_frequency(value):
-	noise_frequency = value
-	noise.period = noise_frequency
+func update_size(new_size: int):
+	self.chunk_size = new_size
 	_trigger_update()
 
-func set_lacunarity(value):
-	noise_lacunarity = value
-	noise.lacunarity = noise_lacunarity
-	_trigger_update()
+func update_noise(new_noise: Noise.NoiseGenerator):
+	self.noise = new_noise
+
+func _init(noise_generator: Noise.BasicGenerator, size, x, z):
+	self.noise = noise_generator
+	self.chunk_x = x
+	self.chunk_z = z
+	self.chunk_size = size
 	
-func set_octaves(value):
-	noise_octaves = value
-	noise.octaves = noise_octaves
-	_trigger_update()
+	var terrain_mesh = MeshInstance.new()
+	terrain_mesh.name = "TerrainMesh"
+	add_child(terrain_mesh)
+	
+	var water_mesh = MeshInstance.new()
+	water_mesh.name = "WaterMesh"
+	add_child(water_mesh)
+	
+	self.mesh_instance = terrain_mesh
+	self.water_mesh = water_mesh
 
-func set_persistence(value):
-	noise_persistence = value
-	noise.persistence = noise_persistence
-	_trigger_update()
 
 func set_water_offset(value):
 	chunk_water_offset = value
-	if chunk_generate_water:
-		chunk_generate_water()
-	elif get_node_or_null("WaterMesh") != null:
-		$WaterMesh.queue_free()
+	if water_mesh.translation != null:
+		water_mesh.translation = Vector3(water_mesh.translation.x, value, water_mesh.translation.z)
+	else:
+		water_mesh.translation = Vector3(chunk_x, value, chunk_z)
 
-func set_material(value):
-	material_terrain = value
-	_trigger_update()
+func set_terrain_material(new_material: Material):
+	material_terrain = new_material
+	if mesh_instance.mesh != null:
+		mesh_instance.set_surface_material(0, new_material)
 
-func _trigger_update():
-	if mesh_instance == null:
-		mesh_instance = $TerrainMesh
-		return
-	for child in mesh_instance.get_children():
-		child.queue_free()
-	
+func _trigger_update():	
 	generate_chunk()
 	if chunk_generate_water:
-		chunk_generate_water()
-	elif get_node_or_null("WaterMesh") != null:
-		$WaterMesh.queue_free()
-
-func set_chunk_x(value):
-	chunk_x = value
-	_trigger_update()
-
-func set_chunk_z(value):
-	chunk_z = value
-	_trigger_update()
+		generate_water()
 
 func set_generate_water(value):
 	chunk_generate_water = value
-	_trigger_update()
+	if chunk_generate_water:
+		generate_water()
+	else:
+		water_mesh.visible = false
 
 func set_chunk_size(value):
 	chunk_size = value
-	_trigger_update()
+	#generate_chunk()
+	if chunk_generate_water:
+		pass
+		#generate_water()
 
-func set_chunk_seed(value):
-	chunk_seed = value
-	_trigger_update()
-
-
-func _initialize():
-	pass
-
-
-#func _ready():
-#	_trigger_update()
-#	noise = OpenSimplexNoise.new()
-	
 func generate_chunk():
 	# TODO: rewrite such that it uses array meshes
 	# for even faster execution
-	
-	noise.seed = chunk_seed
+
 	var plane_mesh = PlaneMesh.new()
 	plane_mesh.size = Vector2(chunk_size, chunk_size)
 	
@@ -117,9 +94,7 @@ func generate_chunk():
 	
 	for i in range(data_tool.get_vertex_count()):
 		var vertex = data_tool.get_vertex(i)
-		
-		vertex.y = noise.get_noise_2d(vertex.x + chunk_x, vertex.z + chunk_z) * 80
-		
+		vertex.y = noise.get_value(vertex.x + chunk_x, vertex.z + chunk_z) * 80
 		data_tool.set_vertex(i, vertex)
 		
 	for s in range(array_plane.get_surface_count()):
@@ -140,19 +115,9 @@ func generate_chunk():
 		child.visible = false
 
 	
-func chunk_generate_water():
-	for child in get_children():
-		if 'WaterMesh' in child.name:
-			if not child.is_queued_for_deletion():
-				child.queue_free()
-	
+func generate_water():
 	var plane_mesh = PlaneMesh.new()
 	plane_mesh.size = Vector2(chunk_size, chunk_size)
 	plane_mesh.material = material_water
-	var mesh_instance = MeshInstance.new()
-	mesh_instance.name = "WaterMesh"
-	mesh_instance.mesh = plane_mesh
+	water_mesh.mesh = plane_mesh
 	mesh_instance.translation = Vector3(mesh_instance.translation.x, chunk_water_offset, mesh_instance.translation.z)
-	add_child(mesh_instance)
-	if Engine.editor_hint:
-		mesh_instance.set_owner(get_tree().edited_scene_root)
