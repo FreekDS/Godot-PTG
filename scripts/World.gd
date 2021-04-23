@@ -13,7 +13,7 @@ var thread
 
 
 func _ready():
-	randomize()
+	
 	noise = OpenSimplexNoise.new()
 	noise.seed = randi()
 	
@@ -77,8 +77,7 @@ func update_chunks():
 			var chunk = get_chunk(x, z)
 			if chunk != null:
 				chunk.should_remove = false
-	pass
-	
+
 func cleanup_chunks():
 	for key in chunks:
 		if chunks[key].should_remove:
