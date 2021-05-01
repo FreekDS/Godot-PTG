@@ -63,7 +63,7 @@ func load_chunk(args):
 	var x : float = args[1]
 	var z : float = args[2]
 	
-	var chunk = Chunk2.new(noise_generator, x * chunk_size, z * chunk_size, chunk_size, height_multiplier)
+	var chunk = Chunk.new(noise_generator, x * chunk_size, z * chunk_size, chunk_size, height_multiplier)
 	chunk.generate_chunk()
 	chunk.set_terrain_material(mat)
 	chunk.display_chunk(get_world().scenario)
@@ -73,7 +73,7 @@ func load_chunk(args):
 	call_deferred("finalize_load", chunk, thread)
 
 
-func finalize_load(chunk : Chunk2, thread : Thread):
+func finalize_load(chunk : Chunk, thread : Thread):
 	chunks.append(chunk)
 	var key = Vector2(chunk.x/chunk_size, chunk.z / chunk_size)
 	chunk_dict[key] = chunk
@@ -139,7 +139,7 @@ func update_chunks():
 				chunk.should_remove = false
 
 func cleanup_chunks():
-	var chunk : Chunk2
+	var chunk : Chunk
 	for key in chunk_dict:
 		chunk = chunk_dict[key]
 		if chunk.should_remove:

@@ -9,15 +9,10 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Spatial",
+"base": "Reference",
 "class": "Chunk",
 "language": "GDScript",
 "path": "res://scripts/Chunk.gd"
-}, {
-"base": "Reference",
-"class": "Chunk2",
-"language": "GDScript",
-"path": "res://scripts/Chunk2.gd"
 }, {
 "base": "Reference",
 "class": "Noise",
@@ -26,14 +21,13 @@ _global_script_classes=[ {
 } ]
 _global_script_class_icons={
 "Chunk": "",
-"Chunk2": "",
 "Noise": ""
 }
 
 [application]
 
 config/name="Procedural Terrain Generator"
-run/main_scene="res://scenes/winterbeelden.tscn"
+run/main_scene="res://scenes/VisualServerTest.tscn"
 
 [input]
 

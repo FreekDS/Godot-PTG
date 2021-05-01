@@ -5,6 +5,7 @@
 
 [node name="VisualServerTest" type="Spatial"]
 script = ExtResource( 2 )
+height_multiplier = 100.0
 
 [node name="Player" parent="." instance=ExtResource( 1 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2797, 0 )
