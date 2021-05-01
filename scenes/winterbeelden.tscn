@@ -5,6 +5,7 @@
 
 [node name="Playground" type="Spatial"]
 script = ExtResource( 4 )
+world_seed = 202
 height_multiplier = 50.0
 show_noise = true
 regenerate_chunk = true

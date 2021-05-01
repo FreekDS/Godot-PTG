@@ -164,82 +164,11 @@ func generate_chunk():
 	mesh_instance.cast_shadow = GeometryInstance.SHADOW_CASTING_SETTING_OFF
 	mesh_instance.mesh = mesh
 	
+	# Costly line
+	mesh_instance.create_trimesh_collision()
+	
 	for child in mesh_instance.get_children():
 		child.visible = false
-
-
-func generate_chunk_old():
-	# TODO: rewrite such that it uses array meshes
-	# for even faster execution
-
-	var plane_mesh = PlaneMesh.new()
-	plane_mesh.size = Vector2(chunk_size, chunk_size)
-	
-	var t_start = OS.get_ticks_msec()
-	
-	plane_mesh.subdivide_depth = chunk_size * 0.5
-	plane_mesh.subdivide_width = chunk_size * 0.5
-	
-	
-	var t_end = OS.get_ticks_msec()
-	print("Subdivide took " + str(t_end - t_start) + " ms")
-	t_start = t_end
-	
-	
-	var surface_tool = SurfaceTool.new()
-	var data_tool = MeshDataTool.new()
-	
-	surface_tool.create_from(plane_mesh, 0)
-	var array_plane = surface_tool.commit()
-	var error = data_tool.create_from_surface(array_plane, 0)
-	
-	t_end = OS.get_ticks_msec()
-	print("Create from plane mesh took " + str(t_end - t_start) + " ms")
-	t_start = t_end
-	
-	
-	for i in range(data_tool.get_vertex_count()):
-		var vertex = data_tool.get_vertex(i)
-		vertex.y = noise.get_value(vertex.x + chunk_x, vertex.z + chunk_z) * self.height_multiplier
-		data_tool.set_vertex(i, vertex)
-	
-	t_end = OS.get_ticks_msec()
-	print("Loop 1 took " + str(t_end - t_start) + " ms")
-	t_start = t_end
-	
-	
-	for s in range(array_plane.get_surface_count()):
-		array_plane.surface_remove(s)
-		
-	
-	t_end = OS.get_ticks_msec()
-	print("Loop 2 took " + str(t_end - t_start) + " ms")
-	t_start = t_end
-	
-	data_tool.commit_to_surface(array_plane)
-	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLE_FAN)
-	surface_tool.add_smooth_group(true)
-	surface_tool.append_from(array_plane, 0, Transform.IDENTITY)
-	surface_tool.generate_normals()
-	
-	t_end = OS.get_ticks_msec()
-	print("Generating normals and stuff took " + str(t_end - t_start) + " ms")
-	t_start = t_end
-	
-	mesh_instance.mesh = surface_tool.commit()
-	mesh_instance.mesh.surface_set_material(0, material_terrain)
-	# TODO : fix mesh_instance.create_trimesh_collision()
-	mesh_instance.cast_shadow = GeometryInstance.SHADOW_CASTING_SETTING_OFF
-	for child in mesh_instance.get_children():
-		child.visible = false
-	
-	t_end = OS.get_ticks_msec()
-	print("Finalizing took " + str(t_end - t_start) + " ms")
-	t_start = t_end
-	
-	print("")
-	print("")
-	print("")
 
 	
 func generate_water():

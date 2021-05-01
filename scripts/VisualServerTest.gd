@@ -1,6 +1,5 @@
 extends Spatial
 
-
 # Noise related variables
 export var world_seed = 0
 export var chunk_size = 100
@@ -12,7 +11,7 @@ export(float, 1, 200, 0.5) var height_multiplier = 5.0
 
 
 # Infinite terrain variables
-export(int, 2, 16) var view_distance = 8
+export(int, 2, 16) var view_distance = 16
 export(PackedScene) var player_object
 
 
@@ -26,12 +25,11 @@ export(bool) var regenerate_chunk = false setget regen_chunk
 
 
 # Class variables
-var chunks : Spatial
+var chunks : Array
 var noise_generator: Noise.NoiseGenerator
 var chunk_dict: Dictionary = {}
 var unready_chunks: Dictionary = {}
 var generation_thread: Thread
-
 
 
 func regen_chunk(value):
@@ -45,7 +43,7 @@ func regen_chunk(value):
 
 # Spawn one chunk
 func spawn_chunk(x=0, z=0):
-	var key = String(x) + ',' + String(z)
+	var key = Vector2(x, z)
 	
 	# Chunk is present, or is loading
 	if chunk_dict.has(key) or unready_chunks.has(key):
@@ -65,20 +63,24 @@ func load_chunk(args):
 	var x : float = args[1]
 	var z : float = args[2]
 	
-	var chunk = Chunk.new(noise_generator, chunk_size, x * chunk_size, z * chunk_size, height_multiplier)
+	var chunk = Chunk2.new(noise_generator, x * chunk_size, z * chunk_size, chunk_size, height_multiplier)
 	chunk.generate_chunk()
 	chunk.set_terrain_material(mat)
-	chunk.translation = Vector3(x * chunk_size, 0, z * chunk_size)
-		
+	chunk.display_chunk(get_world().scenario)
+	
+	#finalize_load(chunk, thread)
+
 	call_deferred("finalize_load", chunk, thread)
 
 
-func finalize_load(chunk : Chunk, thread : Thread):
-	chunks.add_child(chunk)
-	var key = String(chunk.chunk_x / chunk_size) + ',' + String(chunk.chunk_z / chunk_size)
+func finalize_load(chunk : Chunk2, thread : Thread):
+	chunks.append(chunk)
+	var key = Vector2(chunk.x/chunk_size, chunk.z / chunk_size)
 	chunk_dict[key] = chunk
 	unready_chunks.erase(key)
-	thread.wait_to_finish()
+	
+	if thread.is_active():
+		thread.wait_to_finish()
 
 
 # Simple image display
@@ -100,19 +102,17 @@ func update_noise_params():
 
 
 func _ready():
-	chunks = $Chunks
+	self.chunks = []
 	if player_object == null:
 		player_object = $Player
 	generation_thread = Thread.new()
 	noise_generator = Noise.BasicGenerator.new(
 		world_seed, octaves, period, lacunarity, persistence
 	)
-	print("uehm?")
-	spiral(2, 2)
 
 
 func get_chunk(x, z):
-	var key = str(x) + ',' + str(z)
+	var key = Vector2(x, z)
 	if chunk_dict.has(key):
 		return chunk_dict[key]
 	else:
@@ -133,16 +133,19 @@ func update_chunks():
 	
 	for x in range(p_x - view_distance * 0.5, p_x + view_distance * 0.5):
 		for z in range(p_z - view_distance * 0.5, p_z + view_distance * 0.5):
-			spawn_chunk(-x, -z)
-			var chunk = get_chunk(-x, -z)
+			spawn_chunk(x, z)
+			var chunk = get_chunk(x, z)
 			if chunk != null:
 				chunk.should_remove = false
 
 func cleanup_chunks():
+	var chunk : Chunk2
 	for key in chunk_dict:
-		if chunk_dict[key].should_remove:
-			chunk_dict[key].queue_free()
+		chunk = chunk_dict[key]
+		if chunk.should_remove:
+			chunk.clear()
 			chunk_dict.erase(key)
+
 
 func reset_chunks():
 	for key in chunk_dict:

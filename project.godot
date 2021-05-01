@@ -15,12 +15,18 @@ _global_script_classes=[ {
 "path": "res://scripts/Chunk.gd"
 }, {
 "base": "Reference",
+"class": "Chunk2",
+"language": "GDScript",
+"path": "res://scripts/Chunk2.gd"
+}, {
+"base": "Reference",
 "class": "Noise",
 "language": "GDScript",
 "path": "res://scripts/NoiseGenerators.gd"
 } ]
 _global_script_class_icons={
 "Chunk": "",
+"Chunk2": "",
 "Noise": ""
 }
 
