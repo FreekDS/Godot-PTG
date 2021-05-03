@@ -6,13 +6,15 @@ script/source = "extends Control
 
 var fps_node: Label
 var generation_threads: Label
+var visible_chunks: Label
 
 var terrain_generator
 
 
 func _ready():
-	fps_node = $FPS
-	generation_threads = $\"FPS/Generation Threads\"
+	fps_node = $VBoxContainer/FPS
+	generation_threads = $\"VBoxContainer/Generation Threads\"
+	visible_chunks = $\"VBoxContainer/Chunk Count\"
 	
 	terrain_generator = find_node(\"VisualServerTest\")
 	if terrain_generator == null:
@@ -26,7 +28,8 @@ func _process(_delta):
 	fps_node.text = \"FPS: %s\" % fps
 	if generation_threads.visible:
 		generation_threads.text = \"Generation Threads: %s\" % terrain_generator.threads.size()
-
+	if generation_threads.visible:
+		visible_chunks.text = \"Chunk count: %s\" % terrain_generator.chunk_dict.size()
 
 "
 
@@ -42,20 +45,33 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="FPS" type="Label" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_right = 0.19
 margin_left = 5.0
 margin_top = 5.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="FPS" type="Label" parent="VBoxContainer"]
+margin_right = 189.0
+margin_bottom = 14.0
 text = "FPS: "
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Generation Threads" type="Label" parent="FPS"]
-margin_left = -0.0441379
-margin_top = 12.5417
-margin_right = 146.956
-margin_bottom = 26.5417
+[node name="Generation Threads" type="Label" parent="VBoxContainer"]
+margin_top = 18.0
+margin_right = 189.0
+margin_bottom = 32.0
 text = "Threads for generation:"
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="Chunk Count" type="Label" parent="VBoxContainer"]
+margin_top = 36.0
+margin_right = 189.0
+margin_bottom = 50.0
+text = "Visible chunks:"

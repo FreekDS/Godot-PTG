@@ -16,7 +16,7 @@ export(Material) var terrain = preload("res://materials/terrain.material") setge
 
 
 onready var chunk = $CUT
-onready var display = $NoiseMap
+onready var display: TextureRect = $NoiseMap
 
 var chunk_instance: Chunk = null
 
@@ -42,8 +42,9 @@ func set_octaves(v):
 
 
 func update(_value=null):
-	regenerate_chunk()
-
+	var noise = Noise.BasicGenerator.new(world_seed, octaves, period, lacunarity, persistence)
+	regenerate_chunk(noise)
+	display_image(noise)
 
 func set_period(v):
 	period = v
@@ -80,14 +81,22 @@ func set_terrain(v):
 	update()
 
 
-func regenerate_chunk():
+func regenerate_chunk(noise):
 	if chunk == null:
-		chunk = $CUT
+		#chunk = $CUT
 		return
-	var noise = Noise.BasicGenerator.new(world_seed, octaves, period, lacunarity, persistence)
 	chunk_instance = Chunk.new(noise, x, z, chunk_size, height_multiplier)
 	chunk_instance.generate_chunk()
 	chunk.mesh = chunk_instance.get_mesh()
 	chunk.mesh.surface_set_material(0, terrain)
 	chunk.global_transform.origin = Vector3(-chunk_size,0,0)
 
+
+func display_image(noise: Noise.BasicGenerator):
+	if display == null:
+		#display = $NoiseMap
+		return
+	
+	var tex = ImageTexture.new()
+	tex.create_from_image(noise.get_image(chunk_size))
+	display.texture = tex

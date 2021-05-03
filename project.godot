@@ -27,7 +27,7 @@ _global_script_class_icons={
 [application]
 
 config/name="Procedural Terrain Generator"
-run/main_scene="res://scenes/VisualServerTest.tscn"
+run/main_scene="res://scenes/World.tscn"
 
 [input]
 
