@@ -16,6 +16,7 @@ export(Material) var terrain = preload("res://materials/terrain.material") setge
 
 
 onready var chunk = $CUT
+onready var display = $NoiseMap
 
 var chunk_instance: Chunk = null
 

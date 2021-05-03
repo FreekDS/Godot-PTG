@@ -15,12 +15,12 @@ var mesh : Mesh
 # Visualization
 var visual_instance = null
 
-func _init(noise_generator, x, z, size, height_multiplier):
+func _init(noise_generator, x_coord, z_coord, chunk_size, height_mult):
 	self.noise = noise_generator
-	self.x = x
-	self.z = z
-	self.size = size
-	self.height_multiplier = height_multiplier
+	self.x = x_coord
+	self.z = z_coord
+	self.size = chunk_size
+	self.height_multiplier = height_mult
 	self.mesh = null
 
 
@@ -58,7 +58,9 @@ func generate_chunk():
 	var topleft_x : float = (self.size) / 2.0
 	var topleft_z : float = -topleft_x
 	
+# warning-ignore:shadowed_variable
 	for z in range(self.size+1):
+# warning-ignore:shadowed_variable
 		for x in range(self.size+1):
 			verts[i] = Vector3(topleft_x + x, noise.get_value(self.x + x, self.z + z) * self.height_multiplier, topleft_z + z)
 			uvs[i] = Vector2(x / float(self.size+1), z / float(self.size+1))
@@ -108,6 +110,7 @@ func generate_chunk():
 	arr[Mesh.ARRAY_TEX_UV] = uvs
 	arr[Mesh.ARRAY_INDEX] = triangles
 	
+# warning-ignore:shadowed_variable
 	var mesh = ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 	mesh.surface_set_material(0, terrain_material)

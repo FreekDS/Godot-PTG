@@ -8,10 +8,10 @@ class NoiseGenerator:
 	
 	var noise_seed : int
 	
-	func _init(noise_seed: int):
-		self.noise_seed = noise_seed
+	func _init(a_noise_seed: int):
+		self.noise_seed = a_noise_seed
 	
-	func get_value(x: float, z: float) -> float:
+	func get_value(_x: float, _z: float) -> float:
 		assert(false, "Abstract Method get_value() not implemented")
 		return 0.0
 
@@ -56,7 +56,7 @@ class BasicGenerator:
 		self.simplex_noise.period = period
 		
 	func set_octaves(octaves: int):
-		self.simplex_noise.octaves = clamp(octaves, 1, 9)
+		self.simplex_noise.octaves = int(clamp(octaves, 1, 9))
 	
 	func set_lacunarity(lacunarity: float):
 		self.simplex_noise.lacunarity = lacunarity
