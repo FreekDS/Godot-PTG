@@ -7,30 +7,62 @@ script/source = "extends Control
 var fps_node: Label
 var generation_threads: Label
 var visible_chunks: Label
+var vertices_count: Label
 
 var terrain_generator
+
+
+var vertex_count = 0
+var thread
 
 
 func _ready():
 	fps_node = $VBoxContainer/FPS
 	generation_threads = $\"VBoxContainer/Generation Threads\"
 	visible_chunks = $\"VBoxContainer/Chunk Count\"
+	vertices_count = $VBoxContainer/Vertices
 	
-	terrain_generator = find_node(\"VisualServerTest\")
+	
+	terrain_generator = find_node(\"World\")
 	if terrain_generator == null:
-		terrain_generator = find_parent(\"VisualServerTest\")
+		terrain_generator = find_parent(\"World\")
 	
 	generation_threads.visible = terrain_generator != null
+
+
+func get_vertices_count(thread):
+	if not terrain_generator:
+		return
+	var count = 0
+	for chunk in terrain_generator.chunk_dict.values():
+		var verts = chunk.get_mesh().surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+		count += verts.size()
+	vertex_count = count
+	call_deferred(\"finish_count\", thread)
+
+
+func start_counting_vertices():
+	thread = Thread.new()
+	thread.start(self, 'get_vertices_count', thread)
+
+
+func finish_count(thread: Thread):
+	if thread != null and thread.is_active():
+		thread.wait_to_finish()
+	
 
 
 func _process(_delta):
 	var fps = Engine.get_frames_per_second()
 	fps_node.text = \"FPS: %s\" % fps
+	
+	if thread == null or not thread.is_active():
+		start_counting_vertices()
+	
 	if generation_threads.visible:
 		generation_threads.text = \"Generation Threads: %s\" % terrain_generator.threads.size()
-	if generation_threads.visible:
 		visible_chunks.text = \"Chunk count: %s\" % terrain_generator.chunk_dict.size()
-
+		vertices_count.text = \"Rendered vertices: %s\" % vertex_count
 "
 
 [node name="Debug UI" type="Control"]
@@ -75,3 +107,8 @@ margin_top = 36.0
 margin_right = 189.0
 margin_bottom = 50.0
 text = "Visible chunks:"
+
+[node name="Vertices" type="Label" parent="VBoxContainer"]
+margin_top = 54.0
+margin_right = 189.0
+margin_bottom = 68.0

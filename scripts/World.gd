@@ -2,8 +2,8 @@ extends Spatial
 
 # Noise related variables
 export var world_seed = 0
-export var chunk_size = 100
-export var octaves = 5
+export(int, 50, 500) var chunk_size = 100
+export(int, 1, 9) var octaves = 5
 export var period = 100
 export var lacunarity = 7
 export var persistence = 0.2
@@ -12,6 +12,7 @@ export(float, 1, 200, 0.5) var height_multiplier = 5.0
 
 # Infinite terrain variables
 export(int, 2, 16) var view_distance = 16
+export(int, 2, 16) var collision_distance = 4
 export(PackedScene) var player_object
 
 
@@ -24,22 +25,31 @@ export(bool) var show_noise = false setget update_img
 
 
 # Class variables
-var chunks : Array
 var noise_generator: Noise.NoiseGenerator
+
 var chunk_dict: Dictionary = {}
 var unready_chunks: Dictionary = {}
-var generation_thread: Thread
+var collider_dict: Dictionary = {}
+var unready_colliders: Dictionary = {}
+
 
 var threads: Array = []
 var max_threads = 8
 
+var physics_threads: Array = []
+var max_physics_threads = 8
 
 var update_movement_threshold = 10
 var old_position
 
 
+""""
 
-# Spawn one chunk
+Spawn one chunk
+param x: x coordinate of chunk
+param z: z coordinate of chunk
+
+"""
 func spawn_chunk(x=0, z=0):
 	var key = Vector2(x, z)
 	
@@ -52,9 +62,7 @@ func spawn_chunk(x=0, z=0):
 		var thread = Thread.new()
 		threads.append(thread)
 		unready_chunks[key] = 1
-		
-		#load_chunk([generation_thread, x, z])
-		
+
 		var err = thread.start(self, "load_chunk", [thread, x, z])
 		if err != OK:
 			print("Failure in creating thread!")
@@ -67,28 +75,30 @@ func load_chunk(args):
 	
 	# Generate chunk and display it
 	var chunk = Chunk.new(noise_generator, x * chunk_size, z * chunk_size, chunk_size, height_multiplier)
-	chunk.generate_chunk()
 	chunk.set_terrain_material(mat)
+	chunk.generate_chunk()
 	chunk.display_chunk(get_world().scenario)
-
-	#finalize_load(chunk, thread)
-
+	
 	call_deferred("finalize_load", chunk, thread)
 
 
 func finalize_load(chunk : Chunk, thread : Thread):
 	var key = Vector2(chunk.x/chunk_size, chunk.z / chunk_size)
-	chunk_dict[key] = chunk
-# warning-ignore:return_value_discarded
-	unready_chunks.erase(key)
+	
+	if thread != null and thread.is_active():
+		thread.wait_to_finish()
 
 	var index = threads.find(thread)
 	if index != -1:
 		threads.remove(index)
 	
-	if thread.is_active():
-		thread.wait_to_finish()
-
+	# Apparently creating the collider must happen in the main thread
+	# Else the game crashes without any notice
+	chunk.create_collider(get_world().space)
+	chunk_dict[key] = chunk
+	
+# warning-ignore:return_value_discarded
+	unready_chunks.erase(key)
 
 # Simple image display
 func update_img(_value):
@@ -111,7 +121,6 @@ func update_noise_params():
 func _ready():
 	if player_object == null:
 		player_object = $Player
-	#generation_thread = Thread.new()
 	noise_generator = Noise.BasicGenerator.new(
 		world_seed, octaves, period, lacunarity, persistence
 	)
@@ -134,7 +143,7 @@ func _process(_delta):
 	var count = chunk_dict.size()
 	
 	if pos.distance_squared_to(old_position) >= update_movement_threshold or count < view_distance * view_distance:
-		update_chunks()
+		update_chunks()	
 		cleanup_chunks()
 		reset_chunks()
 		old_position = pos
@@ -153,6 +162,7 @@ func update_chunks():
 			if chunk != null:
 				chunk.should_remove = false
 
+
 func cleanup_chunks():
 	var chunk : Chunk
 	for key in chunk_dict:
@@ -168,21 +178,3 @@ func reset_chunks():
 		var chunk = chunk_dict[key]
 		chunk.should_remove = true
 
-
-func spiral(X, Y):
-	var x = 0
-	var y = 0
-	var dx = 0
-	var dy = -1
-	
-	var m = max(X, Y) 
-	
-	for _i in range(m * m):
-		if (-X/2 < x and x <= X/2) and (-Y/2 < y and y <= Y/2):
-			print(x, y)
-		if x == y or (x < 0 and x == -y) or (x>0 and x == 1-y):
-			var temp = dx
-			dx = -dy
-			dy = temp
-		x += dx
-		y += dy

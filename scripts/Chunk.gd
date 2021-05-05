@@ -11,9 +11,12 @@ var should_remove : bool = true
 
 var terrain_material : Material
 var mesh : Mesh
+var collision_shape: ConvexPolygonShape
 
-# Visualization
+# Visualization & physics server instances
 var visual_instance = null
+var physics_body = null
+
 
 func _init(noise_generator, x_coord, z_coord, chunk_size, height_mult):
 	self.noise = noise_generator
@@ -22,6 +25,7 @@ func _init(noise_generator, x_coord, z_coord, chunk_size, height_mult):
 	self.size = chunk_size
 	self.height_multiplier = height_mult
 	self.mesh = null
+	self.collision_shape = null
 
 
 func get_mesh() -> Mesh:
@@ -111,16 +115,18 @@ func generate_chunk():
 	arr[Mesh.ARRAY_INDEX] = triangles
 	
 # warning-ignore:shadowed_variable
-	var mesh = ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
-	mesh.surface_set_material(0, terrain_material)
+	var amesh = ArrayMesh.new()
+	amesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	amesh.surface_set_material(0, terrain_material)
 	
-	self.mesh = mesh
+	self.mesh = amesh
 
 
 func clear():
 	if self.visual_instance != null:
 		VisualServer.free_rid(self.visual_instance)
+	if self.physics_body != null:
+		PhysicsServer.free_rid(self.physics_body)
 	if self.mesh == null:
 		return
 	#self.mesh.free()
@@ -150,3 +156,42 @@ func set_visible(value: bool):
 
 func set_terrain_material(mat: Material):
 	self.terrain_material = mat
+
+# TODO fix pls
+func create_collider(world_space: RID):
+	assert(self.mesh != null, "Generate chunk first!")
+	if self.physics_body == null:
+		# TODO: check if init sleeping does something
+		self.physics_body = PhysicsServer.body_create(PhysicsServer.BODY_MODE_STATIC, true)
+	if self.collision_shape == null:
+		self.collision_shape = get_mesh().create_convex_shape()
+	PhysicsServer.body_set_space(self.physics_body, world_space)
+	PhysicsServer.body_add_shape(self.physics_body, self.collision_shape.get_rid())
+	
+	
+	var transf = Transform(Basis(), get_world_location())
+	PhysicsServer.body_set_shape_transform(self.physics_body, 0, transf)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
