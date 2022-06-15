@@ -1,0 +1,76 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://scenes/MapGenerator.gd" type="Script" id=1]
+[ext_resource path="res://scenes/WorldGen.gd" type="Script" id=2]
+[ext_resource path="res://scenes/CamPivot.gd" type="Script" id=3]
+[ext_resource path="res://TerrainGenerators/terrain_curve.tres" type="Curve" id=4]
+
+[sub_resource type="Curve" id=1]
+_data = [ Vector2( 0, 0 ), 0.0, 1.4, 0, 0, Vector2( 1, 1 ), 0.0, 0.0, 0, 0 ]
+
+[sub_resource type="CapsuleShape" id=3]
+
+[sub_resource type="Environment" id=4]
+background_mode = 1
+background_color = Color( 0.368627, 0.658824, 0.890196, 1 )
+background_energy = 0.2
+ambient_light_color = Color( 0.956863, 0.956863, 0.956863, 1 )
+ambient_light_energy = 0.2
+ambient_light_sky_contribution = 0.0
+fog_enabled = true
+tonemap_mode = 1
+ssao_radius = 22.37
+ssao_color = Color( 0.172549, 0.286275, 0.0784314, 1 )
+dof_blur_far_enabled = true
+dof_blur_far_distance = 4000.0
+dof_blur_far_amount = 0.05
+dof_blur_far_quality = 0
+adjustment_brightness = 1.07
+
+[node name="Game" type="Spatial"]
+
+[node name="MapViewer" type="Control" parent="."]
+visible = false
+margin_right = 1028.0
+margin_bottom = 598.0
+script = ExtResource( 1 )
+mapWidth = 1000
+mapHeight = 1000
+noiseScale = 0.1
+gen_new = true
+noise_seed = 1
+jep = SubResource( 1 )
+
+[node name="TextureRect" type="TextureRect" parent="MapViewer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+stretch_mode = 4
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="World" type="Spatial" parent="."]
+script = ExtResource( 2 )
+heighContribution = ExtResource( 4 )
+TrackNode = NodePath("CamPivot")
+
+[node name="CamPivot" type="KinematicBody" parent="World"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 121.683, 0 )
+script = ExtResource( 3 )
+
+[node name="Camera" type="Camera" parent="World/CamPivot"]
+fov = 45.0
+far = 8192.0
+
+[node name="CollisionShape" type="CollisionShape" parent="World/CamPivot"]
+shape = SubResource( 3 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="World"]
+transform = Transform( 1, 0, 0, 0, 0.915361, 0.402635, 0, -0.402635, 0.915361, 0, 92.6054, 0 )
+light_color = Color( 0.945098, 0.960784, 0.772549, 1 )
+light_energy = 0.75
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource( 4 )
