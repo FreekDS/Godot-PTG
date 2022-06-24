@@ -24,16 +24,28 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scripts/MeshData.gd"
 }, {
+"base": "Spatial",
+"class": "NativeChunk",
+"language": "NativeScript",
+"path": "res://bin/NativeScripts/NativeChunk.gdns"
+}, {
 "base": "Reference",
 "class": "NoiseFunc",
 "language": "GDScript",
 "path": "res://scripts/Noise.gd"
+}, {
+"base": "Node",
+"class": "TestClass",
+"language": "NativeScript",
+"path": "res://bin/NativeScripts/TestClass.gdns"
 } ]
 _global_script_class_icons={
 "Chunk": "",
 "HeightRes": "",
 "MeshData": "",
-"NoiseFunc": ""
+"NativeChunk": "",
+"NoiseFunc": "",
+"TestClass": ""
 }
 
 [application]
@@ -41,6 +53,10 @@ _global_script_class_icons={
 config/name="Infinite Terrain"
 run/main_scene="res://scenes/Game.tscn"
 config/icon="res://icon.png"
+
+[editor]
+
+main_run_args="--verbose"
 
 [global]
 

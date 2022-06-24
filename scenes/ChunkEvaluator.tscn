@@ -1,0 +1,143 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://scenes/Camera.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/ChunkEvaluator.gd" type="Script" id=2]
+[ext_resource path="res://scenes/EvaluatorUI.gd" type="Script" id=3]
+
+[sub_resource type="Environment" id=4]
+background_mode = 1
+background_color = Color( 0.368627, 0.658824, 0.890196, 1 )
+background_energy = 0.2
+ambient_light_color = Color( 0.956863, 0.956863, 0.956863, 1 )
+ambient_light_energy = 0.2
+ambient_light_sky_contribution = 0.0
+fog_enabled = true
+tonemap_mode = 1
+ssao_radius = 22.37
+ssao_color = Color( 0.172549, 0.286275, 0.0784314, 1 )
+dof_blur_far_enabled = true
+dof_blur_far_distance = 4000.0
+dof_blur_far_amount = 0.05
+dof_blur_far_quality = 0
+adjustment_brightness = 1.07
+
+[sub_resource type="VisualShaderNodeColorConstant" id=1]
+constant = Color( 0, 0, 0, 0.847059 )
+
+[sub_resource type="VisualShader" id=2]
+code = "shader_type spatial;
+render_mode specular_schlick_ggx;
+
+
+
+
+void vertex() {
+// Output:0
+
+}
+
+void fragment() {
+// Color:2
+	vec3 n_out2p0 = vec3(0.000000, 0.000000, 0.000000);
+	float n_out2p1 = 0.847059;
+
+// Output:0
+	ALBEDO = n_out2p0;
+	ALPHA = n_out2p1;
+
+}
+
+void light() {
+// Output:0
+
+}
+"
+graph_offset = Vector2( 0, 150 )
+nodes/fragment/2/node = SubResource( 1 )
+nodes/fragment/2/position = Vector2( 160, 200 )
+nodes/fragment/connections = PoolIntArray( 2, 0, 0, 0, 2, 1, 0, 1 )
+
+[sub_resource type="ShaderMaterial" id=3]
+shader = SubResource( 2 )
+
+[node name="Node" type="Node"]
+
+[node name="Root" type="Spatial" parent="."]
+script = ExtResource( 2 )
+
+[node name="CamPivot" parent="Root" instance=ExtResource( 1 )]
+transform = Transform( 1, 0, 0, 0, 0.817266, 0.576261, 0, -0.576261, 0.817266, 0, 173.589, 204.764 )
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Root"]
+environment = SubResource( 4 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="Root"]
+transform = Transform( 1, 0, 0, 0, 0.915361, 0.402635, 0, -0.402635, 0.915361, 0, 56.0412, 0 )
+light_color = Color( 0.945098, 0.960784, 0.772549, 1 )
+light_energy = 0.75
+
+[node name="EvaluatorUI" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 0.167
+margin_bottom = -0.200005
+script = ExtResource( 3 )
+GenerateButton = NodePath("CenterContainer/HBoxContainer/Regenerate")
+LODSliderLabel = NodePath("CenterContainer/HBoxContainer/LODValue")
+LODSlider = NodePath("CenterContainer/HBoxContainer/HSlider")
+
+[node name="ColorRect" type="ColorRect" parent="EvaluatorUI"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color( 0, 0, 0, 0.27451 )
+
+[node name="CenterContainer" type="CenterContainer" parent="EvaluatorUI"]
+material = SubResource( 3 )
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="EvaluatorUI/CenterContainer"]
+margin_left = 319.0
+margin_top = 37.0
+margin_right = 704.0
+margin_bottom = 61.0
+
+[node name="LOD level" type="Label" parent="EvaluatorUI/CenterContainer/HBoxContainer"]
+margin_top = 5.0
+margin_right = 67.0
+margin_bottom = 19.0
+text = "LOD level:"
+
+[node name="HSlider" type="HSlider" parent="EvaluatorUI/CenterContainer/HBoxContainer"]
+margin_left = 71.0
+margin_right = 211.0
+margin_bottom = 16.0
+rect_min_size = Vector2( 140, 0 )
+min_value = 1.0
+max_value = 6.0
+value = 1.0
+tick_count = 6
+
+[node name="LODValue" type="Label" parent="EvaluatorUI/CenterContainer/HBoxContainer"]
+margin_left = 215.0
+margin_top = 5.0
+margin_right = 235.0
+margin_bottom = 19.0
+text = "= 1"
+
+[node name="Regenerate" type="Button" parent="EvaluatorUI/CenterContainer/HBoxContainer"]
+margin_left = 239.0
+margin_right = 323.0
+margin_bottom = 24.0
+focus_mode = 0
+text = "Regenerate"
+
+[node name="auto" type="CheckBox" parent="EvaluatorUI/CenterContainer/HBoxContainer"]
+margin_left = 327.0
+margin_right = 385.0
+margin_bottom = 24.0
+focus_mode = 0
+text = "Auto"
+
+[connection signal="value_changed" from="EvaluatorUI/CenterContainer/HBoxContainer/HSlider" to="EvaluatorUI" method="_on_LODSlider_value_changed"]
+[connection signal="pressed" from="EvaluatorUI/CenterContainer/HBoxContainer/Regenerate" to="EvaluatorUI" method="_on_Regenerate_pressed"]
+[connection signal="toggled" from="EvaluatorUI/CenterContainer/HBoxContainer/auto" to="EvaluatorUI" method="_on_auto_toggled"]

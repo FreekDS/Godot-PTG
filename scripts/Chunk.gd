@@ -52,28 +52,61 @@ func _init(
 
 func generate():
 	"""Takes 353 ms"""
+
+	var meshData = []
+	meshData.resize(LOD_COUNT)
+
+	print("Creating arrays... ", OS.get_ticks_msec())
+	for i in range(LOD_COUNT):
+		var lod = 1 if i == 0 else 2 * i
+		var lod_mesh_size = (self.size-1) / lod + 1
+
+		var vertices = PoolVector3Array()
+		var uvs = PoolVector2Array()
+		var normals = PoolVector3Array()
+		var triangles = PoolIntArray()
+
+		triangles.resize(lod_mesh_size * lod_mesh_size * 6)
+		normals.resize(lod_mesh_size * lod_mesh_size)
+		vertices.resize(lod_mesh_size * lod_mesh_size)
+		uvs.resize(lod_mesh_size * lod_mesh_size)
+
+		meshData[i] = {
+			'vertices': vertices,
+			'uvs': uvs,
+			'normals': normals,
+			'triangles': triangles,
+			'v_i': 0,
+			't_i': 0,
+			'lod_size': lod_mesh_size
+		}
+
+
+	# var vertices = PoolVector3Array()
+	# var uvs = PoolVector2Array()
+	# var normals = PoolVector3Array()
+	# var triangles = PoolIntArray()
+
+	# triangles.resize(self.size * self.size * 6)
+	# normals.resize(self.size * self.size)
+	# vertices.resize(self.size * self.size)
+	# uvs.resize(self.size * self.size)
 	
-	var array_mesh = ArrayMesh.new()
+	var v_is: Array = []
+	var t_is: Array = []
+	v_is.resize(LOD_COUNT)
+	t_is.resize(LOD_COUNT)
+	for i in range(LOD_COUNT):
+		v_is[i] = 0
+		t_is[i] = 0
 
-	var arrays = []
-	arrays.resize(ArrayMesh.ARRAY_MAX)
-
-	var vertices = PoolVector3Array()
-	var uvs = PoolVector2Array()
-	var normals = PoolVector3Array()
-	var triangles = PoolIntArray()
-
-	triangles.resize(self.size * self.size * 6)
-	normals.resize(self.size * self.size)
-	vertices.resize(self.size * self.size)
-	uvs.resize(self.size * self.size)
-	
 	var v_i = 0
 	var t_i = 0
 	
 	var topleft_x : float = -(self.size) / 2.0
 	var topleft_z : float = topleft_x
 	
+	print("Creating mesh data... ", OS.get_ticks_msec())
 	for z in range(self.size):
 		for x in range(self.size):
 			
@@ -95,55 +128,66 @@ func generate():
 				z / float(self.size)
 			)
 			
-			vertices[v_i] = vert
-			uvs[v_i] = uv
+			meshData[0]['vertices'][v_is[0]] = vert
+			meshData[0]['uvs'][v_is[0]] = uv
+
+			# vertices[v_i] = vert
+			# uvs[v_i] = uv
 			
 			# 1 face == 2 triangles
-			if x < self.size - 1 and z < self.size - 1:
+			if x < meshData[0]['lod_size'] - 1 and z < meshData[0]['lod_size'] - 1:
 
 				# triangle 1
-				triangles[t_i] = v_i
-				triangles[t_i + 1] = v_i + self.size + 1
-				triangles[t_i + 2] = v_i + self.size 
+				meshData[0]['triangles'][t_is[0]] = v_is[0]
+				meshData[0]['triangles'][t_is[0] + 1] = v_is[0] + meshData[0]['lod_size'] + 1
+				meshData[0]['triangles'][t_is[0] + 2] = v_is[0] + meshData[0]['lod_size'] 
 
 				# triangle 2
-				triangles[t_i + 3] = v_i + self.size + 1
-				triangles[t_i + 4] = v_i
-				triangles[t_i + 5] = v_i + 1
-#
-				t_i += 6
-			v_i += 1
+				meshData[0]['triangles'][t_is[0] + 3] = v_is[0] + meshData[0]['lod_size'] + 1
+				meshData[0]['triangles'][t_is[0] + 4] = v_is[0]
+				meshData[0]['triangles'][t_is[0] + 5] = v_is[0] + 1
+
+				t_is[0] += 6
+			v_is[0] += 1
+	
+	print("Creating normals... ", OS.get_ticks_msec())
 
 	# Calculate normals :)
-	for ti in range(triangles.size() / 3):
+	for ti in range(meshData[0]['triangles'].size() / 3):
 
 		var triangle_index = ti * 3
 
-		var index_a = triangles[triangle_index]
-		var index_b = triangles[triangle_index + 1]
-		var index_c = triangles[triangle_index + 2]
+		var index_a = meshData[0]['triangles'][triangle_index]
+		var index_b = meshData[0]['triangles'][triangle_index + 1]
+		var index_c = meshData[0]['triangles'][triangle_index + 2]
 
-		var a: Vector3 = vertices[index_a]
-		var b: Vector3 = vertices[index_b]
-		var c: Vector3 = vertices[index_c]
+		var a: Vector3 = meshData[0]['vertices'][index_a]
+		var b: Vector3 = meshData[0]['vertices'][index_b]
+		var c: Vector3 = meshData[0]['vertices'][index_c]
 
 		var AB = b - a
 		var AC = c - a
 
 		var normal_value = AC.cross(AB).normalized()
 
-		normals[index_a] += normal_value
-		normals[index_b] += normal_value
-		normals[index_c] += normal_value
+		meshData[0]['normals'][index_a] += normal_value
+		meshData[0]['normals'][index_b] += normal_value
+		meshData[0]['normals'][index_c] += normal_value
 
 	# Normalize normals
-	for i in range(len(normals)):
-		normals[i] = normals[i].normalized()
+	for i in range(len(meshData[0]['normals'])):
+		meshData[0]['normals'][i] = meshData[0]['normals'][i].normalized()
 
-	arrays[ArrayMesh.ARRAY_VERTEX] = vertices
-	arrays[ArrayMesh.ARRAY_TEX_UV] = uvs
-	arrays[ArrayMesh.ARRAY_NORMAL] = normals
-	arrays[ArrayMesh.ARRAY_INDEX] = triangles
+
+	print("Applying mesh... ", OS.get_ticks_msec())
+	var arrays = []
+	arrays.resize(ArrayMesh.ARRAY_MAX)
+	arrays[ArrayMesh.ARRAY_VERTEX] = PoolVector3Array(meshData[0]['vertices'])
+	arrays[ArrayMesh.ARRAY_TEX_UV] = meshData[0]['uvs']
+	arrays[ArrayMesh.ARRAY_NORMAL] = meshData[0]['normals']
+	arrays[ArrayMesh.ARRAY_INDEX] = meshData[0]['triangles']
+
+	var array_mesh = ArrayMesh.new()
 	array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	var m = MeshInstance.new()
 	add_child(m)
